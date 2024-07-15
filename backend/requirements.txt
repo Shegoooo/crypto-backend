@@ -1,0 +1,7 @@
+Flask
+python-dotenv
+cryptography
+flask-cors
+africastalking
+pyrebase4
+pycryptodome
