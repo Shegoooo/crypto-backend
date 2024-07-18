@@ -4,6 +4,7 @@ from Crypto.Random import get_random_bytes
 import base64
 import os
 
+
 def generate_rsa_keys():
     key = RSA.generate(2048)
     private_key = key.export_key()
@@ -12,9 +13,9 @@ def generate_rsa_keys():
 
 class MessageEncryptor:
     def __init__(self):
-        # get keys from environment variables and convert str to bytes
-        self.private_key = bytes(os.getenv('PRIVATE_KEY'), 'utf-8')
-        self.public_key = bytes(os.getenv('PUBLIC_KEY'), 'utf-8')
+        # get keys from environment variables
+        self.private_key, self.public_key = generate_rsa_keys()
+        self.key = ''
 
     def pad_message(self, message):
         return message + (16 - len(message) % 16) * ' '
@@ -32,6 +33,7 @@ class MessageEncryptor:
         return decrypted_message
 
     def encrypt_key_rsa(self, aes_key, public_key):
+        assert public_key
         rsa_key = RSA.import_key(public_key)
         cipher_rsa = PKCS1_OAEP.new(rsa_key)
         encrypted_key = cipher_rsa.encrypt(aes_key)
@@ -47,8 +49,12 @@ class MessageEncryptor:
     def encrypt_message(self, message):
         
         encrypted_message, aes_key = self.encrypt_message_aes(message)
-        print('self public key', self.public_key)
-        encrypted_aes_key = self.encrypt_key_rsa(aes_key, self.public_key)
+        try:
+            encrypted_aes_key = self.encrypt_key_rsa(aes_key, self.public_key)
+        except AssertionError:
+            raise Exception("Missing public key")
+        except Exception as e:
+            raise Exception(f"Failed to encrypt AES key: {str(e)}")
         return encrypted_message, encrypted_aes_key
 
     def decrypt_message(self, encrypted_message, encrypted_aes_key):
@@ -61,13 +67,17 @@ def test_encryption():
     encryptor = MessageEncryptor()
 
     # Encrypt a message
-    message = "Hello, World!"
+    message = "Hello, Baddie!"
     encrypted_message, encrypted_aes_key = encryptor.encrypt_message(message)
 
+    # check tyoe of enc_aes_key
+    print(type(encrypted_aes_key))
+    print(encrypted_aes_key)
     # Print the encrypted message and the encrypted AES key
     # print("Encrypted message:", encrypted_message)
     # print("Encrypted AES key:", encrypted_aes_key)
 
+    # breakpoint()
     # Decrypt the message
     decrypted_message = encryptor.decrypt_message(encrypted_message, encrypted_aes_key)
 
@@ -76,6 +86,5 @@ def test_encryption():
     print("Encrypted message:", encrypted_message)
     print("Decrypted message:", decrypted_message)
 
-# Run the test function
+# # Run the test function
 # test_encryption()
-
