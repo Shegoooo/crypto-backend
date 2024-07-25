@@ -20,7 +20,7 @@ class MessageEncryptor:
     def pad_message(self, message):
         return message + (16 - len(message) % 16) * ' '
 
-    def encrypt_message_aes(self, message):
+    def encrypt_message_aes(self, message): 
         key = get_random_bytes(16)
         cipher = AES.new(key, AES.MODE_ECB)
         encrypted_message = cipher.encrypt(self.pad_message(message).encode())
